@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Routine Tracker</title>
+  <meta name="theme-color" content="#16746b">
+  <meta name="description" content="Track daily routines, completion progress, and habit categories.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Routine">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #1f2933;
+      --muted: #64707d;
+      --line: #d9e0e8;
+      --primary: #16746b;
+      --primary-dark: #0f5d56;
+      --whatsapp: #128c7e;
+      --whatsapp-dark: #0b6f63;
+      --accent: #b45f28;
+      --warning: #9a6a13;
+      --danger: #b42318;
+      --danger-bg: #fff0ed;
+      --done-bg: #e9f7ef;
+      --done-text: #17633a;
+      --focus: rgba(22, 116, 107, 0.18);
+      --shadow: 0 12px 28px rgba(35, 48, 64, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(22, 116, 107, 0.08), transparent 260px),
+        var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:focus-visible,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      outline: 3px solid var(--focus);
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .login-page {
+      display: grid;
+      min-height: 100vh;
+      place-items: center;
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(22, 116, 107, 0.14), transparent 280px),
+        var(--bg);
+    }
+
+    .login-panel {
+      width: min(430px, 100%);
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .login-panel h1 {
+      margin-bottom: 8px;
+      font-size: 29px;
+    }
+
+    .login-panel p {
+      margin-bottom: 20px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .login-error {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: var(--danger);
+      background: var(--danger-bg);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .login-error.show {
+      display: block;
+    }
+
+    .login-otp-hint {
+      display: none;
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: var(--primary-dark);
+      background: #e9f4f2;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .login-otp-hint.show {
+      display: block;
+    }
+
+    .profile-fields {
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 6px;
+      font-size: 30px;
+      line-height: 1.12;
+    }
+
+    .subtle {
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .header-actions,
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel,
+    .metric,
+    .routine {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin-bottom: 14px;
+      font-size: 19px;
+    }
+
+    form {
+      display: grid;
+      gap: 13px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .primary {
+      color: #ffffff;
+      background: var(--primary);
+    }
+
+    .primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: #e7edf3;
+    }
+
+    .secondary:hover {
+      background: #dce5ee;
+    }
+
+    .danger {
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .danger:hover {
+      background: #ffe0da;
+    }
+
+    .whatsapp {
+      color: #ffffff;
+      background: var(--whatsapp);
+    }
+
+    .whatsapp:hover {
+      background: var(--whatsapp-dark);
+    }
+
+    .text-btn {
+      min-height: auto;
+      padding: 6px 8px;
+      color: var(--primary-dark);
+      background: transparent;
+    }
+
+    .text-btn:hover {
+      background: #eaf4f2;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      min-height: 106px;
+      padding: 16px;
+    }
+
+    .metric span {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 28px;
+      line-height: 1.05;
+    }
+
+    .progress-track {
+      height: 11px;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e8edf2;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 180ms ease;
+    }
+
+    .toolbar {
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .toolbar h2 {
+      margin-bottom: 0;
+      font-size: 20px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .filters select,
+    .filters input {
+      width: 170px;
+    }
+
+    .routine-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .routine {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+    }
+
+    .routine.done {
+      border-color: #b9ddc8;
+      background: var(--done-bg);
+    }
+
+    .check {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--muted);
+      background: #ffffff;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .routine.done .check {
+      border-color: var(--done-text);
+      color: #ffffff;
+      background: var(--done-text);
+    }
+
+    .routine-main {
+      min-width: 0;
+    }
+
+    .routine-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-bottom: 5px;
+    }
+
+    .routine-title h3 {
+      margin-bottom: 0;
+      overflow-wrap: anywhere;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .routine.done h3 {
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      color: #50606e;
+    }
+
+    .routine-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      max-width: 180px;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      color: var(--primary-dark);
+      background: #e9f4f2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .priority-high {
+      color: var(--danger);
+      background: #fff0ed;
+    }
+
+    .priority-medium {
+      color: var(--warning);
+      background: #fff6dc;
+    }
+
+    .priority-low {
+      color: var(--done-text);
+      background: #e9f7ef;
+    }
+
+    .routine-note {
+      margin: 8px 0 0;
+      color: #465564;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+
+    .routine-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      padding: 32px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .streak-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .whatsapp-panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .whatsapp-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .streak-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .streak-row strong {
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 920px) {
+      .layout,
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      header,
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .header-actions,
+      .filters {
+        justify-content: stretch;
+      }
+
+      .header-actions button,
+      .filters select,
+      .filters input {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        width: min(100% - 20px, 1180px);
+        padding-top: 16px;
+      }
+
+      .form-row,
+      .routine {
+        grid-template-columns: 1fr;
+      }
+
+      .check {
+        width: 100%;
+        border-radius: 6px;
+      }
+
+      .routine-actions {
+        justify-content: stretch;
+      }
+
+      .routine-actions button {
+        flex: 1 1 120px;
+      }
+
+      .whatsapp-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="login-page" id="loginPage">
+    <section class="login-panel">
+      <h1>Daily Routine Tracker</h1>
+      <p>Login to manage your routines for today.</p>
+      <form id="loginForm">
+        <label>
+          Mobile number
+          <input id="mobileNumber" type="tel" placeholder="Example: 9876543210" autocomplete="tel" inputmode="tel" required>
+        </label>
+        <button class="secondary" id="sendOtpBtn" type="button">Send OTP</button>
+        <label class="hidden" id="otpLabel">
+          OTP
+          <input id="otpCode" type="text" placeholder="Enter 6 digit OTP" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+        </label>
+        <button class="secondary hidden" id="verifyOtpBtn" type="button">Verify OTP</button>
+        <div class="login-otp-hint" id="otpHint"></div>
+        <div class="profile-fields hidden" id="profileFields">
+          <label>
+            Name
+            <input id="loginName" type="text" placeholder="Your name" autocomplete="name" maxlength="60">
+          </label>
+          <label>
+            Password
+            <input id="loginPassword" type="password" placeholder="Create or enter password" autocomplete="current-password" minlength="4">
+          </label>
+        </div>
+        <div class="login-error" id="loginError">Verify OTP first, then enter name and password.</div>
+        <button class="primary" type="submit">Login</button>
+        <button class="secondary hidden" id="installLoginBtn" type="button">Install app</button>
+      </form>
+    </section>
+  </main>
+
+  <main class="app hidden" id="appPage">
+    <header>
+      <div>
+        <h1>Daily Routine Tracker</h1>
+        <p class="subtle" id="todayLabel">Build the day one repeatable habit at a time.</p>
+      </div>
+      <div class="header-actions">
+        <button class="secondary" id="seedBtn" type="button">Add sample day</button>
+        <button class="secondary" id="exportBtn" type="button">Export CSV</button>
+        <button class="secondary hidden" id="installAppBtn" type="button">Install app</button>
+        <button class="secondary" id="logoutBtn" type="button">Logout</button>
+        <button class="danger" id="clearBtn" type="button">Clear all</button>
+      </div>
+    </header>
+
+    <section class="metrics" aria-label="Routine summary">
+      <article class="metric">
+        <span>Today complete</span>
+        <strong id="completionRate">0%</strong>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </article>
+      <article class="metric">
+        <span>Done</span>
+        <strong id="doneCount">0 / 0</strong>
+      </article>
+      <article class="metric">
+        <span>Next routine</span>
+        <strong id="nextRoutine">None</strong>
+      </article>
+      <article class="metric">
+        <span>Total minutes</span>
+        <strong id="totalMinutes">0</strong>
+      </article>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2 id="formTitle">Add Routine</h2>
+        <form id="routineForm">
+          <input id="editingId" type="hidden">
+          <label>
+            Routine name
+            <input id="name" type="text" placeholder="Morning walk" maxlength="80" required>
+          </label>
+          <div class="form-row">
+            <label>
+              Time
+              <input id="time" type="time" required>
+            </label>
+            <label>
+              Minutes
+              <input id="minutes" type="number" min="1" max="600" step="1" value="15" required>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              Category
+              <select id="category" required>
+                <option>Health</option>
+                <option>Study</option>
+                <option>Work</option>
+                <option>Home</option>
+                <option>Mind</option>
+                <option>Fitness</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>
+              Priority
+              <select id="priority" required>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Low</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Notes
+            <textarea id="notes" placeholder="Small cue, checklist, or reminder"></textarea>
+          </label>
+          <button class="primary" type="submit" id="saveBtn">Add routine</button>
+          <button class="secondary" type="button" id="cancelEditBtn" hidden>Cancel edit</button>
+        </form>
+
+        <div class="streak-list" id="categoryBreakdown"></div>
+
+        <section class="whatsapp-panel" aria-label="WhatsApp integration">
+          <h2>WhatsApp</h2>
+          <label>
+            WhatsApp number
+            <input id="whatsappNumber" type="tel" placeholder="Example: 919876543210" inputmode="tel">
+          </label>
+          <div class="whatsapp-actions">
+            <button class="secondary" type="button" id="saveWhatsappBtn">Save number</button>
+            <button class="whatsapp" type="button" id="sendWhatsappBtn">Send summary</button>
+          </div>
+        </section>
+      </aside>
+
+      <section>
+        <div class="toolbar">
+          <h2>Today's Routines</h2>
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="Search routines">
+            <select id="statusFilter" aria-label="Filter by status">
+              <option value="all">All status</option>
+              <option value="open">Open</option>
+              <option value="done">Done</option>
+            </select>
+            <select id="categoryFilter" aria-label="Filter by category">
+              <option value="all">All categories</option>
+            </select>
+            <button class="secondary" id="resetBtn" type="button">Reset today</button>
+          </div>
+        </div>
+        <div class="routine-list" id="routineList"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const LOGIN_SESSION_KEY = "daily-routine-tracker-login-user";
+    const STORAGE_KEY_PREFIX = "daily-routine-tracker-items";
+    const LAST_DATE_KEY = "daily-routine-tracker-date";
+    const USER_PROFILE_KEY_PREFIX = "daily-routine-tracker-user-profile";
+    const WHATSAPP_NUMBER_KEY_PREFIX = "daily-routine-tracker-whatsapp-number";
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const categories = ["Health", "Study", "Work", "Home", "Mind", "Fitness", "Other"];
+    const sampleRoutines = [
+      {
+        name: "Wake up and hydrate",
+        time: "06:30",
+        minutes: 5,
+        category: "Health",
+        priority: "High",
+        notes: "Drink water before checking the phone."
+      },
+      {
+        name: "Java practice",
+        time: "08:00",
+        minutes: 45,
+        category: "Study",
+        priority: "High",
+        notes: "Review one concept and write one small program."
+      },
+      {
+        name: "Evening walk",
+        time: "18:30",
+        minutes: 30,
+        category: "Fitness",
+        priority: "Medium",
+        notes: "Keep it easy and consistent."
+      }
+    ];
+
+    const loginPage = document.getElementById("loginPage");
+    const appPage = document.getElementById("appPage");
+    const loginForm = document.getElementById("loginForm");
+    const loginNameInput = document.getElementById("loginName");
+    const loginPasswordInput = document.getElementById("loginPassword");
+    const mobileNumberInput = document.getElementById("mobileNumber");
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const otpLabel = document.getElementById("otpLabel");
+    const otpCodeInput = document.getElementById("otpCode");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const otpHint = document.getElementById("otpHint");
+    const profileFields = document.getElementById("profileFields");
+    const loginError = document.getElementById("loginError");
+    const installLoginBtn = document.getElementById("installLoginBtn");
+    const form = document.getElementById("routineForm");
+    const editingId = document.getElementById("editingId");
+    const nameInput = document.getElementById("name");
+    const timeInput = document.getElementById("time");
+    const minutesInput = document.getElementById("minutes");
+    const categoryInput = document.getElementById("category");
+    const priorityInput = document.getElementById("priority");
+    const notesInput = document.getElementById("notes");
+    const saveBtn = document.getElementById("saveBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const formTitle = document.getElementById("formTitle");
+    const routineList = document.getElementById("routineList");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const categoryFilter = document.getElementById("categoryFilter");
+    const completionRate = document.getElementById("completionRate");
+    const progressBar = document.getElementById("progressBar");
+    const doneCount = document.getElementById("doneCount");
+    const nextRoutine = document.getElementById("nextRoutine");
+    const totalMinutes = document.getElementById("totalMinutes");
+    const categoryBreakdown = document.getElementById("categoryBreakdown");
+    const whatsappNumberInput = document.getElementById("whatsappNumber");
+    const saveWhatsappBtn = document.getElementById("saveWhatsappBtn");
+    const sendWhatsappBtn = document.getElementById("sendWhatsappBtn");
+    const todayLabel = document.getElementById("todayLabel");
+    const seedBtn = document.getElementById("seedBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const installAppBtn = document.getElementById("installAppBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let currentUser = loadSessionUser();
+    let currentMobileNumber = currentUser.mobileNumber;
+    let routines = [];
+    let installPrompt = null;
+    let generatedOtp = "";
+    let verifiedMobileNumber = "";
+    setTodayLabel();
+    showInitialPage();
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      installPrompt = event;
+      installLoginBtn.classList.remove("hidden");
+      installAppBtn.classList.remove("hidden");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installPrompt = null;
+      installLoginBtn.classList.add("hidden");
+      installAppBtn.classList.add("hidden");
+    });
+
+    sendOtpBtn.addEventListener("click", sendOtp);
+    verifyOtpBtn.addEventListener("click", verifyOtp);
+
+    mobileNumberInput.addEventListener("input", () => {
+      if (cleanMobileNumber(mobileNumberInput.value) !== verifiedMobileNumber) {
+        resetOtpVerification();
+      }
+    });
+
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const name = loginNameInput.value.trim();
+      const password = loginPasswordInput.value;
+      const mobileNumber = cleanMobileNumber(mobileNumberInput.value);
+
+      if (!isValidMobileNumber(mobileNumber) || !verifiedMobileNumber || mobileNumber !== verifiedMobileNumber) {
+        loginError.classList.add("show");
+        mobileNumberInput.focus();
+        return;
+      }
+
+      if (!name || password.length < 4) {
+        loginError.classList.add("show");
+        focusFirstInvalidProfileField(name, password);
+        return;
+      }
+
+      currentUser = { name, mobileNumber };
+      currentMobileNumber = mobileNumber;
+      sessionStorage.setItem(LOGIN_SESSION_KEY, JSON.stringify(currentUser));
+      localStorage.setItem(getUserProfileKey(mobileNumber), JSON.stringify({ name, password }));
+      loginForm.reset();
+      loginError.classList.remove("show");
+      resetLoginSteps();
+      showApp();
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const routine = {
+        id: editingId.value || makeId(),
+        name: nameInput.value.trim(),
+        time: timeInput.value,
+        minutes: Number(minutesInput.value),
+        category: categoryInput.value,
+        priority: priorityInput.value,
+        notes: notesInput.value.trim(),
+        done: editingId.value ? getRoutine(editingId.value).done : false,
+        completedAt: editingId.value ? getRoutine(editingId.value).completedAt : ""
+      };
+
+      if (editingId.value) {
+        routines = routines.map((item) => item.id === editingId.value ? routine : item);
+      } else {
+        routines.push(routine);
+      }
+
+      routines.sort(sortByTime);
+      saveRoutines();
+      resetForm();
+      render();
+    });
+
+    cancelEditBtn.addEventListener("click", resetForm);
+    installLoginBtn.addEventListener("click", installApp);
+    installAppBtn.addEventListener("click", installApp);
+    searchInput.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
+    categoryFilter.addEventListener("change", render);
+    saveWhatsappBtn.addEventListener("click", saveWhatsappNumber);
+    sendWhatsappBtn.addEventListener("click", sendWhatsappSummary);
+
+    seedBtn.addEventListener("click", () => {
+      const existingNames = new Set(routines.map((routine) => routine.name.toLowerCase()));
+      sampleRoutines.forEach((routine) => {
+        if (!existingNames.has(routine.name.toLowerCase())) {
+          routines.push({
+            ...routine,
+            id: makeId(),
+            done: false,
+            completedAt: ""
+          });
+        }
+      });
+      routines.sort(sortByTime);
+      saveRoutines();
+      render();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      routines = routines.map((routine) => ({ ...routine, done: false, completedAt: "" }));
+      saveRoutines();
+      render();
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      sessionStorage.removeItem(LOGIN_SESSION_KEY);
+      currentUser = { name: "", mobileNumber: "" };
+      currentMobileNumber = "";
+      routines = [];
+      whatsappNumberInput.value = "";
+      appPage.classList.add("hidden");
+      loginPage.classList.remove("hidden");
+      resetLoginSteps();
+      mobileNumberInput.focus();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      if (routines.length === 0 || !confirm("Clear every routine?")) {
+        return;
+      }
+
+      routines = [];
+      saveRoutines();
+      resetForm();
+      render();
+    });
+
+    exportBtn.addEventListener("click", () => {
+      const rows = [
+        ["Name", "Time", "Minutes", "Category", "Priority", "Status", "Completed At", "Notes"],
+        ...routines.map((routine) => [
+          routine.name,
+          routine.time,
+          routine.minutes,
+          routine.category,
+          routine.priority,
+          routine.done ? "Done" : "Open",
+          routine.completedAt || "",
+          routine.notes || ""
+        ])
+      ];
+      const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `daily-routines-${todayKey}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function showInitialPage() {
+      if (currentUser.name && isValidMobileNumber(currentMobileNumber)) {
+        showApp();
+        return;
+      }
+
+      loginPage.classList.remove("hidden");
+      appPage.classList.add("hidden");
+      resetLoginSteps();
+      mobileNumberInput.focus();
+    }
+
+    function showApp() {
+      routines = loadRoutines();
+      resetIfNewDay();
+      loadWhatsappNumber();
+      loginPage.classList.add("hidden");
+      appPage.classList.remove("hidden");
+      render();
+    }
+
+    async function installApp() {
+      if (!installPrompt) {
+        return;
+      }
+
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      installLoginBtn.classList.add("hidden");
+      installAppBtn.classList.add("hidden");
+    }
+
+    function render() {
+      renderCategoryFilter();
+      const filtered = getFilteredRoutines();
+      renderSummary();
+      renderBreakdown();
+      renderList(filtered);
+    }
+
+    function renderSummary() {
+      const total = routines.length;
+      const done = routines.filter((routine) => routine.done).length;
+      const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+      const minutes = routines.reduce((sum, routine) => sum + Number(routine.minutes || 0), 0);
+      const next = routines.find((routine) => !routine.done);
+
+      completionRate.textContent = `${percent}%`;
+      progressBar.style.width = `${percent}%`;
+      doneCount.textContent = `${done} / ${total}`;
+      nextRoutine.textContent = next ? `${formatTime(next.time)} ${next.name}` : "None";
+      totalMinutes.textContent = minutes;
+    }
+
+    function renderCategoryFilter() {
+      const current = categoryFilter.value;
+      const available = Array.from(new Set(routines.map((routine) => routine.category))).sort();
+
+      categoryFilter.innerHTML = '<option value="all">All categories</option>'
+        + available.map((category) => `<option>${escapeHtml(category)}</option>`).join("");
+      categoryFilter.value = available.includes(current) ? current : "all";
+    }
+
+    function renderBreakdown() {
+      const totals = categories
+        .map((category) => {
+          const items = routines.filter((routine) => routine.category === category);
+          const done = items.filter((routine) => routine.done).length;
+          return { category, total: items.length, done };
+        })
+        .filter((item) => item.total > 0);
+
+      if (totals.length === 0) {
+        categoryBreakdown.innerHTML = "";
+        return;
+      }
+
+      categoryBreakdown.innerHTML = totals.map((item) => `
+        <div class="streak-row">
+          <strong>${escapeHtml(item.category)}</strong>
+          <span>${item.done}/${item.total} done</span>
+        </div>
+      `).join("");
+    }
+
+    function renderList(items) {
+      if (items.length === 0) {
+        routineList.innerHTML = '<div class="empty">No routines match this view. Add one from the form to begin.</div>';
+        return;
+      }
+
+      routineList.innerHTML = items.map((routine) => `
+        <article class="routine ${routine.done ? "done" : ""}">
+          <button class="check" type="button" data-action="toggle" data-id="${routine.id}" aria-label="Toggle ${escapeHtml(routine.name)}">
+            ${routine.done ? "OK" : ""}
+          </button>
+          <div class="routine-main">
+            <div class="routine-title">
+              <h3>${escapeHtml(routine.name)}</h3>
+              <span class="badge">${escapeHtml(routine.category)}</span>
+              <span class="badge priority-${routine.priority.toLowerCase()}">${escapeHtml(routine.priority)}</span>
+            </div>
+            <div class="routine-meta">
+              <span>${formatTime(routine.time)}</span>
+              <span>${routine.minutes} min</span>
+              <span>${routine.done ? `Completed ${escapeHtml(routine.completedAt)}` : "Open"}</span>
+            </div>
+            ${routine.notes ? `<p class="routine-note">${escapeHtml(routine.notes)}</p>` : ""}
+          </div>
+          <div class="routine-actions">
+            <button class="whatsapp" type="button" data-action="whatsapp" data-id="${routine.id}">WhatsApp</button>
+            <button class="text-btn" type="button" data-action="edit" data-id="${routine.id}">Edit</button>
+            <button class="danger" type="button" data-action="delete" data-id="${routine.id}">Delete</button>
+          </div>
+        </article>
+      `).join("");
+
+      routineList.querySelectorAll("[data-action]").forEach((button) => {
+        button.addEventListener("click", () => handleRoutineAction(button.dataset.action, button.dataset.id));
+      });
+    }
+
+    function handleRoutineAction(action, id) {
+      if (action === "toggle") {
+        routines = routines.map((routine) => {
+          if (routine.id !== id) {
+            return routine;
+          }
+
+          const done = !routine.done;
+          return {
+            ...routine,
+            done,
+            completedAt: done ? new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""
+          };
+        });
+      }
+
+      if (action === "edit") {
+        startEdit(id);
+        return;
+      }
+
+      if (action === "whatsapp") {
+        sendRoutineToWhatsapp(id);
+        return;
+      }
+
+      if (action === "delete") {
+        routines = routines.filter((routine) => routine.id !== id);
+      }
+
+      saveRoutines();
+      render();
+    }
+
+    function startEdit(id) {
+      const routine = getRoutine(id);
+
+      editingId.value = routine.id;
+      nameInput.value = routine.name;
+      timeInput.value = routine.time;
+      minutesInput.value = routine.minutes;
+      categoryInput.value = routine.category;
+      priorityInput.value = routine.priority;
+      notesInput.value = routine.notes || "";
+      formTitle.textContent = "Edit Routine";
+      saveBtn.textContent = "Save changes";
+      cancelEditBtn.hidden = false;
+      nameInput.focus();
+    }
+
+    function resetForm() {
+      form.reset();
+      editingId.value = "";
+      minutesInput.value = 15;
+      categoryInput.value = "Health";
+      priorityInput.value = "Medium";
+      formTitle.textContent = "Add Routine";
+      saveBtn.textContent = "Add routine";
+      cancelEditBtn.hidden = true;
+    }
+
+    function getFilteredRoutines() {
+      const query = searchInput.value.trim().toLowerCase();
+      const status = statusFilter.value;
+      const category = categoryFilter.value;
+
+      return routines.filter((routine) => {
+        const matchesQuery = !query
+          || routine.name.toLowerCase().includes(query)
+          || routine.notes.toLowerCase().includes(query)
+          || routine.category.toLowerCase().includes(query);
+        const matchesStatus = status === "all"
+          || (status === "done" && routine.done)
+          || (status === "open" && !routine.done);
+        const matchesCategory = category === "all" || routine.category === category;
+
+        return matchesQuery && matchesStatus && matchesCategory;
+      });
+    }
+
+    function loadRoutines() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+        return saved.map((routine) => ({
+          notes: "",
+          completedAt: "",
+          ...routine
+        })).sort(sortByTime);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveRoutines() {
+      localStorage.setItem(getStorageKey(), JSON.stringify(routines));
+      localStorage.setItem(LAST_DATE_KEY, todayKey);
+    }
+
+    function getStorageKey() {
+      return `${STORAGE_KEY_PREFIX}-${currentMobileNumber || "guest"}`;
+    }
+
+    function getUserProfileKey(mobileNumber) {
+      return `${USER_PROFILE_KEY_PREFIX}-${mobileNumber}`;
+    }
+
+    function loadSessionUser() {
+      try {
+        const user = JSON.parse(sessionStorage.getItem(LOGIN_SESSION_KEY)) || {};
+        return {
+          name: String(user.name || ""),
+          mobileNumber: cleanMobileNumber(user.mobileNumber || "")
+        };
+      } catch (error) {
+        return { name: "", mobileNumber: "" };
+      }
+    }
+
+    function loadWhatsappNumber() {
+      whatsappNumberInput.value = localStorage.getItem(getWhatsappNumberKey()) || "";
+    }
+
+    function saveWhatsappNumber() {
+      const number = cleanWhatsappNumber(whatsappNumberInput.value);
+      whatsappNumberInput.value = number;
+      localStorage.setItem(getWhatsappNumberKey(), number);
+      alert(number ? "WhatsApp number saved." : "WhatsApp number cleared.");
+    }
+
+    function sendWhatsappSummary() {
+      localStorage.setItem(getWhatsappNumberKey(), cleanWhatsappNumber(whatsappNumberInput.value));
+      openWhatsapp(buildWhatsappSummary());
+    }
+
+    function getWhatsappNumberKey() {
+      return `${WHATSAPP_NUMBER_KEY_PREFIX}-${currentMobileNumber || "guest"}`;
+    }
+
+    function sendRoutineToWhatsapp(id) {
+      const routine = getRoutine(id);
+      if (!routine) {
+        return;
+      }
+
+      openWhatsapp(buildRoutineMessage(routine));
+    }
+
+    function openWhatsapp(message) {
+      const number = cleanWhatsappNumber(whatsappNumberInput.value);
+      const encodedMessage = encodeURIComponent(message);
+      const url = number
+        ? `https://wa.me/${number}?text=${encodedMessage}`
+        : `https://wa.me/?text=${encodedMessage}`;
+
+      window.open(url, "_blank", "noopener");
+    }
+
+    function buildWhatsappSummary() {
+      const done = routines.filter((routine) => routine.done).length;
+      const total = routines.length;
+      const open = routines.filter((routine) => !routine.done);
+      const completed = routines.filter((routine) => routine.done);
+      const lines = [
+        `Daily Routine Tracker - ${todayLabel.textContent}`,
+        `Progress: ${done}/${total} completed`,
+        ""
+      ];
+
+      if (open.length > 0) {
+        lines.push("Pending:");
+        open.forEach((routine) => {
+          lines.push(`- ${formatTime(routine.time)} ${routine.name} (${routine.minutes} min)`);
+        });
+        lines.push("");
+      }
+
+      if (completed.length > 0) {
+        lines.push("Completed:");
+        completed.forEach((routine) => {
+          lines.push(`- ${routine.name}${routine.completedAt ? ` at ${routine.completedAt}` : ""}`);
+        });
+      }
+
+      if (routines.length === 0) {
+        lines.push("No routines added yet.");
+      }
+
+      return lines.join("\n").trim();
+    }
+
+    function buildRoutineMessage(routine) {
+      return [
+        `Routine: ${routine.name}`,
+        `Time: ${formatTime(routine.time)}`,
+        `Duration: ${routine.minutes} min`,
+        `Category: ${routine.category}`,
+        `Priority: ${routine.priority}`,
+        `Status: ${routine.done ? "Done" : "Open"}`,
+        routine.notes ? `Notes: ${routine.notes}` : ""
+      ].filter(Boolean).join("\n");
+    }
+
+    function cleanWhatsappNumber(value) {
+      return String(value).replace(/\D/g, "");
+    }
+
+    function cleanMobileNumber(value) {
+      return String(value).replace(/\D/g, "");
+    }
+
+    function isValidMobileNumber(value) {
+      return /^\d{10,15}$/.test(value);
+    }
+
+    function sendOtp() {
+      const mobileNumber = cleanMobileNumber(mobileNumberInput.value);
+
+      if (!isValidMobileNumber(mobileNumber)) {
+        loginError.classList.add("show");
+        mobileNumberInput.focus();
+        return;
+      }
+
+      generatedOtp = makeOtp();
+      verifiedMobileNumber = "";
+      loginError.classList.remove("show");
+      otpLabel.classList.remove("hidden");
+      verifyOtpBtn.classList.remove("hidden");
+      profileFields.classList.add("hidden");
+      otpCodeInput.value = "";
+      otpHint.textContent = `Demo OTP for ${mobileNumber}: ${generatedOtp}`;
+      otpHint.classList.add("show");
+      otpCodeInput.focus();
+    }
+
+    function verifyOtp() {
+      const mobileNumber = cleanMobileNumber(mobileNumberInput.value);
+      const enteredOtp = cleanMobileNumber(otpCodeInput.value);
+
+      if (!generatedOtp || !isValidMobileNumber(mobileNumber) || enteredOtp !== generatedOtp) {
+        loginError.textContent = "Invalid OTP. Check the code and try again.";
+        loginError.classList.add("show");
+        otpCodeInput.focus();
+        return;
+      }
+
+      verifiedMobileNumber = mobileNumber;
+      generatedOtp = "";
+      loginError.classList.remove("show");
+      loginError.textContent = "Verify OTP first, then enter name and password.";
+      otpHint.textContent = "OTP verified. Enter your name and password.";
+      profileFields.classList.remove("hidden");
+      loginNameInput.required = true;
+      loginPasswordInput.required = true;
+      loginNameInput.focus();
+    }
+
+    function resetOtpVerification() {
+      generatedOtp = "";
+      verifiedMobileNumber = "";
+      otpCodeInput.value = "";
+      otpLabel.classList.add("hidden");
+      verifyOtpBtn.classList.add("hidden");
+      profileFields.classList.add("hidden");
+      otpHint.classList.remove("show");
+      loginNameInput.required = false;
+      loginPasswordInput.required = false;
+    }
+
+    function resetLoginSteps() {
+      resetOtpVerification();
+      loginError.textContent = "Verify OTP first, then enter name and password.";
+      loginError.classList.remove("show");
+    }
+
+    function makeOtp() {
+      return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    function focusFirstInvalidProfileField(name, password) {
+      if (!name) {
+        loginNameInput.focus();
+        return;
+      }
+
+      if (password.length < 4) {
+        loginPasswordInput.focus();
+      }
+    }
+
+    function resetIfNewDay() {
+      const lastDate = localStorage.getItem(LAST_DATE_KEY);
+
+      if (lastDate && lastDate !== todayKey) {
+        routines = routines.map((routine) => ({ ...routine, done: false, completedAt: "" }));
+        saveRoutines();
+      }
+
+      if (!lastDate) {
+        localStorage.setItem(LAST_DATE_KEY, todayKey);
+      }
+    }
+
+    function setTodayLabel() {
+      todayLabel.textContent = new Date().toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    }
+
+    function makeId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+
+      return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    function getRoutine(id) {
+      return routines.find((routine) => routine.id === id);
+    }
+
+    function sortByTime(a, b) {
+      return a.time.localeCompare(b.time) || a.name.localeCompare(b.name);
+    }
+
+    function formatTime(value) {
+      if (!value) {
+        return "";
+      }
+
+      const [hour, minute] = value.split(":").map(Number);
+      return new Date(2000, 0, 1, hour, minute).toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function csvCell(value) {
+      return `"${String(value).replaceAll('"', '""')}"`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
